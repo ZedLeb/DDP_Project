@@ -1,0 +1,81 @@
+Popularity of baby names 1915 - 2015
+========================================================
+author: Zoe Lebourgeois
+date: 11 September 2016
+autosize: true
+width: 1920
+height: 1080
+
+```{r setup, include=FALSE}
+opts_chunk$set(cache=TRUE,  echo=FALSE, results='asis',fig.width=8,fig.height=6.5,dpi=300,out.width="1920px",height="1080px")
+#library(igraph)
+library(babynames)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+```
+
+Popularity of Baby Names Shiny App
+========================================================
+- This app enables a user to view popularity by year or by name
+- The graphs are based on data of the top 5 ranked baby names for each year
+- The data comes from <https://www.ssa.gov/oact/babynames/top5names.html>
+- The app is for anyone who is interested in the use of names over time
+- The app can be used either in R Studio or on the internet
+- The next slide shows an overall graph of name popularity over time
+
+
+========================================================
+
+```{r}
+data <- babynames %>%
+  filter(year > 1915)
+
+top5perYear <-data %>%                          
+  rename(nName = n) %>%
+  rename(babyName = name) %>%
+  arrange(desc(nName)) %>%
+  group_by_(.dots=c("year","sex")) %>%
+  filter(row_number() <= 5L) %>%
+  arrange(year, sex, desc(nName))
+#This gives same data as showen in this table https://www.ssa.gov/oact/babynames/top5names.html
+
+rank <- top5perYear %>%
+  mutate(ranking = (dense_rank(nName))) %>%
+  mutate(babyName = factor(babyName), 
+         babyName = factor(babyName, levels = sort(levels(babyName), decreasing = TRUE))) %>%
+  mutate(perprop = prop/max(prop))
+
+#Plot rankings
+    p <- ggplot(rank, aes(year, babyName, group = 1))
+    p <- p + geom_point(aes(size = ranking, colour = sex))
+    p <- p + scale_x_continuous(breaks = scales::pretty_breaks(n = 5))
+    p <- p + scale_color_manual(breaks = c("F", "M"), values=c("hot pink", "blue"))
+    p <- p + labs(x = "Year", y = "Baby Name")
+    p
+
+```
+
+
+
+Using the app
+========================================================
+- The app has two tabs
+- The first tab has interactive graphs and summary details of selected names
+- The second tab reproduces the graph seen on the previous slide - an overview of all top 5 ranked names over time
+- The graphs are set by default to the top 5 ranked names for 1916 and details for 'Mary'
+- The user can select a year from the drop-down list and the graphs for boys and girls names are redrawn (forgive the pink and blue!)
+- The user can also type in a specific name (intial capital letter required) and if the name is in the list - a graph will be redrawn of the popularity of that name over time
+- Interesting names are Michael (the name featured in the top rankings for the most years), Shirley (a name showing popularity around the time of 'Shirley Temple'?) and David (which was very popular until the 1990s)
+
+
+
+Links
+========================================================
+
+To view the app <https://zedleb.shinyapps.io/Baby-names-popularity/>.
+
+To view the complete code <https://github.com/ZedLeb/DDP_Project/blob/master/app.R>.
+
+To view the code for these slides (to see the code that produces the graph on slide 3) 
